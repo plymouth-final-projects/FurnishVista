@@ -5,8 +5,8 @@ import { motion } from 'framer-motion';
 import { StatsCards } from '@/components/dashboard/stat-card';
 import { RecentDesigns } from '@/components/dashboard/recent-design';
 import { QuickActions } from '@/components/dashboard/quick-action';
-import { useAuthStore } from '@/states/useAuthStore';
-import { useDesignStore } from '@/states/useDesignStore';
+import { useAuthStore } from '@/lib/stores/useAuthStore';
+import { useDesignStore } from '@/lib/stores/useDesignStore';
 
 function getGreeting(): string {
   const hour = new Date().getHours();

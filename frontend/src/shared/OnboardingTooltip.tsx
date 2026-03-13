@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronRight, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useUIStore } from '@/states/useUIStore';
+import { useUIStore } from '@/lib/stores/useUIStore';
 
 interface OnboardingStep {
   title: string;
