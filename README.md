@@ -1,147 +1,131 @@
-# FurnishVista
+# FurnishVista (frontend) + ArchitectLK (backend)
 
-A premium web-based furniture visualization application that empowers designers to create stunning 2D room layouts and immersive 3D visualizations. Built as coursework for **PUSL3122: HCI, Computer Graphics & Visualisation**.
+This repository contains a **Next.js furniture layout editor** (2D + 3D) and a **Spring Boot REST API** intended to power it. It was built as coursework for **PUSL3122: HCI, Computer Graphics & Visualisation**.
 
-## Features
+## Repository Layout
 
-- **Drag & Drop Layout** - Place and arrange furniture on a 2D canvas with snap-to-grid precision
-- **3D Visualization** - Switch to a realistic 3D view with lighting, shadows, and orbit controls
-- **Colour & Shading** - Customise colours and shading per item or globally
-- **Furniture Catalog** - Browse chairs, tables, shelves, lamps, and decorative items
-- **Room Customisation** - Configure room dimensions, wall colours, floor types, and ceiling finishes
-- **Save & Manage** - Save designs, duplicate, or revisit from the dashboard
-- **Keyboard Shortcuts** - Undo, redo, rotate, delete, and more from the keyboard
-- **Dark & Light Mode** - Seamless theme switching with system preference detection
-- **Onboarding Tour** - Guided walkthrough for first-time users
-- **Responsive Design** - Works across desktop and laptop screen sizes
+```
+frontend/   # Next.js app (UI + editor)
+backend/    # Spring Boot REST API + SQL migrations
+```
 
-## Tech Stack
+## Frontend (Next.js)
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 16 (App Router) |
-| Language | TypeScript (strict mode) |
-| UI Components | shadcn/ui + Radix UI |
-| Styling | Tailwind CSS v4 (OKLCH colour system) |
-| 3D Rendering | React Three Fiber + drei |
-| State Management | Zustand |
-| Animations | Framer Motion |
-| Icons | Lucide React |
-| Notifications | Sonner |
-| Theme | next-themes |
-| Fonts | Inter (body) + Sora (headings) |
+### What’s implemented
 
-## Getting Started
+- **2D drag & drop editor** (React Konva) with grid + snap-to-grid (0.5m)
+- **3D viewport** (React Three Fiber + drei) with orbit controls, environment lighting, and contact shadows
+- **Furniture palette** and **properties panel** (position, rotation, scale, shading, color)
+- **Undo/redo** history buffer (50 entries)
+- **Design management UI**: dashboard, designs list, design detail, duplicate/delete
+- **Keyboard shortcuts** (also shown in the “?” dialog):
+  - `Ctrl+Z` undo
+  - `Ctrl+Shift+Z` redo
+  - `Ctrl+S` save
+  - `Delete` remove selected
+  - `R` rotate 45°
+  - `Ctrl+D` duplicate selected
+  - `2` / `3` switch 2D / 3D
+  - `G` toggle grid
+  - `Escape` deselect
+  - `?` open shortcuts
 
-### Prerequisites
+### Notes
+
+- The frontend currently uses **mock data + mock services** (no backend integration wired yet).
+- The `/` route is still the **default Next.js starter page**; the main experience starts from `/login` → `/dashboard`.
+
+### Tech (from code)
+
+- Next.js **16.1.6** (App Router) + React **19** + TypeScript (strict)
+- Tailwind CSS **v4** + shadcn/ui + Radix UI
+- Zustand, Framer Motion, Sonner, Lucide
+- Fonts: **Geist Sans / Geist Mono** via `next/font`
+
+### Routes
+
+| Route | Description |
+|---|---|
+| `/login` | Login (mock auth) |
+| `/signup` | Signup (mock auth) |
+| `/forgot-password` | Password reset request (mock) |
+| `/dashboard` | Dashboard overview (stats + quick actions + recent designs) |
+| `/designs` | Designs grid (search/sort) |
+| `/designs/[id]` | Design detail view |
+| `/editor/[id]` | Editor (`new` creates a new design) |
+
+### Run locally
+
+Prerequisites:
 
 - Node.js 18+
 - npm
 
-### Installation
-
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd furnish-vista
-
-# Install dependencies
+cd frontend
 npm install
-
-# Start the development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open http://localhost:3000
 
-### Build for Production
+## Backend (Spring Boot)
 
-```bash
-npm run build
-npm run start
-```
+### Tech (from code)
 
-## Project Structure
+- Spring Boot **3.5.10** (Gradle)
+- Java **17** toolchain
+- Spring Web, Validation, Spring Security (session-based setup), Spring Data JPA
+- Postgres driver (and H2 dependency present)
 
-```
-src/
-  app/
-    (auth)/          # Login, Signup, Forgot Password
-    (dashboard)/     # Dashboard, Designs, Rooms, Settings
-    (editor)/        # Room Editor (2D canvas + 3D viewport)
-    page.tsx         # Landing page
-  components/
-    auth/            # Authentication forms
-    dashboard/       # Dashboard widgets (Stats, Quick Actions, Recent Designs)
-    designs/         # Design cards, grid, actions
-    editor/          # Canvas2D, Viewport3D, Toolbar, Palette, Properties
-    layout/          # Sidebar, Header, ThemeToggle, UserNav
-    shared/          # AuthGuard, ConfirmDialog, EmptyState, Loading, Onboarding
-    ui/              # shadcn/ui base components
-  hooks/             # useKeyboardShortcuts, useMediaQuery
-  lib/               # Constants, mock data, utilities
-  services/          # Mock API service layer (auth, design, furniture, room)
-  stores/            # Zustand stores (auth, editor, design, UI)
-  types/             # TypeScript type definitions
-  config/            # Theme configuration
-```
+### Database
 
-## Pages
+The backend configures a Postgres `DataSource` via environment variables (with defaults):
 
-| Route | Description |
-|-------|------------|
-| `/` | Landing page with hero, features, and CTA |
-| `/login` | User login |
-| `/signup` | Account creation with password strength meter |
-| `/forgot-password` | Password reset flow |
-| `/dashboard` | Overview with stats, quick actions, recent designs |
-| `/designs` | Design grid with search, sort, and filter |
-| `/designs/[id]` | Design detail with room preview and furniture list |
-| `/rooms` | Room templates and existing rooms from designs |
-| `/settings` | Profile, appearance, notifications, keyboard shortcuts |
-| `/editor/[id]` | Full room editor with 2D/3D views |
+- `DB_URL` (default `jdbc:postgresql://localhost:5432/architectlk`)
+- `DB_USERNAME` (default `postgres`)
+- `DB_PASSWORD` (default `nethmal123`)
 
-## Editor Features
-
-- **2D Canvas**: Top-down room view with grid overlay, dimension labels, pointer-based drag
-- **3D Viewport**: Perspective camera with orbit controls, environment lighting, contact shadows
-- **Furniture Models**: Category-specific 3D geometry (chair, table, storage, lamp, decor)
-- **Properties Panel**: Position, rotation (0-359), scale (25-300%), shading (0-100%), colour picker
-- **Room Settings**: Dimensions, shape, floor type, wall/floor/ceiling colours
-- **History**: Undo/redo with 50-entry buffer
-- **11 Keyboard Shortcuts**: Including Ctrl+Z/Y, R (rotate), Delete, G (grid), +/- (zoom)
-
-## Accessibility
-
-- ARIA labels on all interactive elements
-- Keyboard navigation throughout the application
-- Semantic HTML (`<dl>` for shortcuts, `role="meter"` for strength indicators)
-- `aria-pressed` states on toggle buttons
-- `role="status"` for dynamic notifications
-- Focus-visible ring styling
-- Screen reader text for icon-only elements
-
-## Mock Data
-
-The application uses a mock service layer that simulates API responses with configurable delays. This allows the frontend to be developed independently and easily connected to a real REST API backend later.
-
-- **User**: Sarah Mitchell (designer)
-- **Furniture**: 12 items across 5 categories
-- **Designs**: 3 pre-built room designs
-- **Room Templates**: 4 configurable room templates
-
-## Deployment
-
-The application is configured for deployment on [Vercel](https://vercel.com):
+There is also a Docker Compose file for Postgres:
 
 ```bash
-npm run build
+cd backend
+docker compose up -d
 ```
 
-No additional configuration is needed - Next.js deploys out of the box on Vercel.
+SQL migrations are stored in `backend/src/main/resources/db/migration/`. A helper script (`backend/migrate.sh`) runs them against the running Docker container (`architectlk-db`).
+
+> On Windows, run `migrate.sh` via Git Bash or WSL (it uses `docker exec` + `psql`).
+
+### Run locally (Windows)
+
+Prerequisites:
+
+- Java 17
+- Docker (optional, for Postgres)
+
+```bash
+cd backend
+./gradlew.bat bootRun
+```
+
+The server defaults to `http://localhost:8080` and allows CORS from `http://localhost:3000`.
+
+Environment variables:
+
+- `SERVER_PORT` (default `8080`)
+- `CORS_ALLOWED_ORIGINS` (default `http://localhost:3000`, comma-separated for multiple origins)
+
+### REST API (high level)
+
+- `POST /api/auth/login`, `POST /api/auth/signup`, `POST /api/auth/forgot-password`, `GET /api/auth/me`
+- `GET /api/dashboard/summary`, `GET /api/dashboard/recent-designs`
+- `GET /api/designs`, `GET /api/designs/{id}`, `POST /api/designs`, `PUT /api/designs/{id}`, `DELETE /api/designs/{id}`, `POST /api/designs/{id}/duplicate`
+- `GET /api/furniture`, `GET /api/furniture/{id}`, `GET /api/furniture/category/{category}`, `GET /api/furniture/search?q=...`
+- `GET /api/rooms`, `POST /api/rooms`, `GET /api/rooms/templates`
+- `GET /api/editor/{designId}/state`, `PUT /api/editor/{designId}/layout`, `GET /api/editor/{designId}/history`
 
 ## Module Information
 
 - **Module**: PUSL3122 - HCI, Computer Graphics & Visualisation
-- **Type**: Individual Coursework (Frontend)
-- **Backend**: To be built separately with Java/REST API
+- **Type**: Coursework project (frontend + backend)
