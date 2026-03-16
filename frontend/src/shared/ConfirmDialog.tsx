@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { useUIStore } from '@/lib/stores/useUIStore';
+import { useUIStore } from '@/states/useUIStore';
 import { AlertTriangle } from 'lucide-react';
 
 export function ConfirmDialog() {

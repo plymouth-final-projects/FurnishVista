@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/lib/stores/useAuthStore';
+import { useAuthStore } from '@/states/useAuthStore';
 import { FullPageLoader } from './LoadingSpinner';
 
 interface AuthGuardProps {

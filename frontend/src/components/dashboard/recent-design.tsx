@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { ArrowRight, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DesignCard } from '@/components/designs/DesignCard';
-import { EmptyState } from '@/shared/EmptyState';
+import { EmptyState } from '@/components/shared/EmptyState';
 import type { Design } from '@/types/design.types';
 
 interface RecentDesignsProps {

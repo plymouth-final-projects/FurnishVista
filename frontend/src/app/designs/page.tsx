@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { DesignActions } from '@/components/designs/DesignActions';
 import { DesignGrid } from '@/components/designs/DesignGrid';
-import { useDesignStore } from '@/lib/stores/useDesignStore';
+import { useDesignStore } from '@/states/useDesignStore';
 
 export default function DesignsPage() {
   const { designs, loadMockDesigns, filteredDesigns, filters } = useDesignStore();

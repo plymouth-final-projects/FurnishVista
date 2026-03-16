@@ -22,8 +22,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { useDesignStore } from '@/lib/stores/useDesignStore';
-import { useUIStore } from '@/lib/stores/useUIStore';
+import { useDesignStore } from '@/states/useDesignStore';
+import { useUIStore } from '@/states/useUIStore';
 import type { Design } from '@/types/design.types';
 
 interface DesignCardProps {
