@@ -1,9 +1,9 @@
 INSERT INTO room_templates (id, name, description, thumbnail, width, length, height, shape, wall_color, floor_type, floor_color, ceiling_color)
 VALUES
-  ('template-1', 'Living Room', 'A spacious rectangular living room', '/images/living-room-template.png', 5, 4, 3, 'rectangular', '#f5f5f4', 'wood', '#d4a574', '#ffffff'),
-  ('template-2', 'Bedroom', 'A cozy bedroom with carpet floor', '/images/bedroom-template.png', 4, 3.5, 2.8, 'rectangular', '#E8E0D5', 'carpet', '#8B8178', '#FFFFFF'),
-  ('template-3', 'Dining Room', 'An elegant dining space with tile flooring', '/images/dining-room-template.png', 4, 3.5, 3, 'rectangular', '#FAF8F5', 'tile', '#C4B5A3', '#FFFFFF'),
-  ('template-4', 'L-Shaped Studio', 'An L-shaped open-plan studio', '/images/studio-template.png', 6, 5, 3, 'l-shaped', '#F0EDE8', 'wood', '#B8956A', '#FFFFFF')
+  ('101', 'Living Room', 'A spacious rectangular living room', '/images/living-room-template.png', 5, 4, 3, 'rectangular', '#f5f5f4', 'wood', '#d4a574', '#ffffff'),
+  ('102', 'Bedroom', 'A cozy bedroom with carpet floor', '/images/bedroom-template.png', 4, 3.5, 2.8, 'rectangular', '#E8E0D5', 'carpet', '#8B8178', '#FFFFFF'),
+  ('103', 'Dining Room', 'An elegant dining space with tile flooring', '/images/dining-room-template.png', 4, 3.5, 3, 'rectangular', '#FAF8F5', 'tile', '#C4B5A3', '#FFFFFF'),
+  ('104', 'Kitchen', 'A modern kitchen with granite countertops', '/images/kitchen-template.png', 5, 4.3, 3, 'rectangular', '#FAF8F5', 'tile', '#C4B5A3', '#FFFFFF')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO furniture_items (id, name, category, model_path, thumbnail, default_width, default_length, default_height, color, description)
