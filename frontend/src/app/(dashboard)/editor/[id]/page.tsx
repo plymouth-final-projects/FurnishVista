@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { EditorToolbar } from '@/components/editor/editor-toolbar';
 import { FurniturePalette } from '@/components/editor/furniture-palette';
@@ -18,13 +18,16 @@ import { useUIStore } from '@/lib/stores/useUIStore';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useFurnitureStore } from '@/lib/stores/useFurnitureStore';
 import { ROTATION_STEP } from '@/lib/constants';
+import { fetchRoomTemplates } from '@/services/rooms.service';
 import type { FurnitureItem } from '@/types/furniture.types';
 import type { PlacedFurniture } from '@/types/editor.types';
 
 export default function EditorPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const designId = params.id as string;
+  const templateId = searchParams.get('template');
   const [isSaving, setIsSaving] = useState(false);
 
   const {
@@ -58,6 +61,7 @@ export default function EditorPage() {
 
   // Load design or create new
   const loadedDesignRef = useRef<string | null>(null);
+  const loadedTemplateRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (designs.length === 0) {
@@ -92,6 +96,34 @@ export default function EditorPage() {
       }
     }
   }, [designId, designs, resetEditor, setDesignId, setDesignName, setRoom, setFurniture, setDirty]);
+
+  useEffect(() => {
+    if (designId !== 'new' || !templateId) return;
+    if (loadedTemplateRef.current === templateId) return;
+
+    let isActive = true;
+    fetchRoomTemplates()
+      .then((templates) => {
+        if (!isActive) return;
+        const template = templates.find((t) => t.id === templateId);
+        if (!template) return;
+        setRoom({
+          id: 'new-room',
+          name: template.name,
+          ...template.room,
+        });
+        setDesignName(template.name);
+        setDirty(false);
+        loadedTemplateRef.current = templateId;
+      })
+      .catch(() => {
+        // Ignore template loading errors; default room stays in place.
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [designId, templateId, setRoom, setDesignName, setDirty]);
 
   // Save handler
   const handleSave = useCallback(async () => {

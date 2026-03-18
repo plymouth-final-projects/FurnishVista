@@ -8,19 +8,21 @@ import { Plus, Ruler, ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { getRoomTemplates } from '@/services/rooms.service';
-import { useDesignStore } from '@/states/useDesignStore';
-import type { RoomTemplate } from '@/types/room.types';
+import { fetchRoomTemplates } from '@/services/rooms.service';
+import type { RoomTemplate } from '@/services/rooms.service';
+import { useDesignStore } from '@/lib/stores/useDesignStore';
 
 export default function RoomsPage() {
   const router = useRouter();
-  const { designs, loadMockDesigns } = useDesignStore();
+  const { designs, loadDesigns } = useDesignStore();
   const [templates, setTemplates] = useState<RoomTemplate[]>([]);
 
   useEffect(() => {
-    if (designs.length === 0) loadMockDesigns();
-    getRoomTemplates().then(setTemplates);
-  }, [designs.length, loadMockDesigns]);
+    if (designs.length === 0) {
+      loadDesigns();
+    }
+    fetchRoomTemplates().then(setTemplates);
+  }, [designs.length, loadDesigns]);
 
   // Extract unique rooms from designs
   const rooms = designs.map((d) => ({
@@ -37,7 +39,7 @@ export default function RoomsPage() {
 
   function handleUseTemplate(template: RoomTemplate) {
     toast.success(`Starting with "${template.name}" template`);
-    router.push('/editor/new');
+    router.push(`/editor/new?template=${template.id}`);
   }
 
   return (
