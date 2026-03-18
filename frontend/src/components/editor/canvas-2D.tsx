@@ -4,8 +4,8 @@ import { useCallback, useRef } from 'react';
 import { Stage, Layer, Rect, Line, Text, Group } from 'react-konva';
 import { toast } from 'sonner';
 import { FurnitureItem2D } from './furniture-item2D';
-import { useEditorStore } from '@/states/useEditorStore';
-import { mockFurniture } from '@/lib/mock-data';
+import { useEditorStore } from '@/lib/stores/useEditorStore';
+import { useFurnitureStore } from '@/lib/stores/useFurnitureStore';
 import { GRID_SIZE } from '@/lib/constants';
 import Konva from 'konva';
 
@@ -18,6 +18,7 @@ export function Canvas2D() {
     zoom,
     gridVisible,
   } = useEditorStore();
+  const { getById } = useFurnitureStore();
 
   const stageRef = useRef<Konva.Stage>(null);
   const pxPerMeter = 80 * zoom;
@@ -27,8 +28,8 @@ export function Canvas2D() {
   const containerHeight = Math.max(600, canvasHeight + 200);
 
   const getFurnitureData = useCallback((furnitureId: string) => {
-    return mockFurniture.find((f) => f.id === furnitureId);
-  }, []);
+    return getById(furnitureId);
+  }, [getById]);
 
   const handleDrag = useCallback(
     (id: string, dx: number, dy: number) => {
@@ -83,7 +84,7 @@ export function Canvas2D() {
     if (!e.evt?.dataTransfer) return;
     
     const furnitureId = e.evt.dataTransfer.getData('furnitureId');
-    const item = mockFurniture.find((f) => f.id === furnitureId);
+    const item = getById(furnitureId);
     if (!item) return;
 
     const { room: r, addFurniture, selectItem: select } = useEditorStore.getState();

@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import type { Design, DesignFilters } from '@/types/design.types';
-import { mockDesigns } from '@/lib/mock-data';
+import {
+  fetchDesigns,
+  createDesign as createDesignRequest,
+  updateDesign as updateDesignRequest,
+  deleteDesign as deleteDesignRequest,
+  duplicateDesign as duplicateDesignRequest,
+} from '@/services/designs.service';
 
 interface DesignState {
   designs: Design[];
@@ -8,14 +14,14 @@ interface DesignState {
   filters: DesignFilters;
 
   setDesigns: (designs: Design[]) => void;
-  addDesign: (design: Design) => void;
-  updateDesign: (id: string, updates: Partial<Design>) => void;
-  deleteDesign: (id: string) => void;
-  duplicateDesign: (id: string) => Design | null;
   getDesignById: (id: string) => Design | undefined;
   setFilters: (filters: Partial<DesignFilters>) => void;
   setLoading: (loading: boolean) => void;
-  loadMockDesigns: () => void;
+  loadDesigns: () => Promise<void>;
+  createDesign: (design: Omit<Design, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Design>;
+  saveDesign: (id: string, updates: Partial<Design>) => Promise<Design>;
+  removeDesign: (id: string) => Promise<void>;
+  duplicateDesign: (id: string) => Promise<Design | null>;
   filteredDesigns: () => Design[];
 }
 
@@ -30,35 +36,6 @@ export const useDesignStore = create<DesignState>((set, get) => ({
 
   setDesigns: (designs) => set({ designs }),
 
-  addDesign: (design) =>
-    set((state) => ({ designs: [...state.designs, design] })),
-
-  updateDesign: (id, updates) =>
-    set((state) => ({
-      designs: state.designs.map((d) =>
-        d.id === id ? { ...d, ...updates, updatedAt: new Date().toISOString() } : d
-      ),
-    })),
-
-  deleteDesign: (id) =>
-    set((state) => ({
-      designs: state.designs.filter((d) => d.id !== id),
-    })),
-
-  duplicateDesign: (id) => {
-    const original = get().designs.find((d) => d.id === id);
-    if (!original) return null;
-    const newDesign: Design = {
-      ...original,
-      id: `design-${Date.now()}`,
-      name: `${original.name} (Copy)`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    set((state) => ({ designs: [...state.designs, newDesign] }));
-    return newDesign;
-  },
-
   getDesignById: (id) => get().designs.find((d) => d.id === id),
 
   setFilters: (filters) =>
@@ -66,7 +43,56 @@ export const useDesignStore = create<DesignState>((set, get) => ({
 
   setLoading: (isLoading) => set({ isLoading }),
 
-  loadMockDesigns: () => set({ designs: [...mockDesigns] }),
+  loadDesigns: async () => {
+    if (get().isLoading) return;
+    set({ isLoading: true });
+    try {
+      const designs = await fetchDesigns();
+      set({ designs, isLoading: false });
+    } catch {
+      set({ isLoading: false });
+    }
+  },
+
+  createDesign: async (design) => {
+    const created = await createDesignRequest({
+      name: design.name,
+      room: design.room,
+      furniture: design.furniture,
+      thumbnail: design.thumbnail ?? null,
+      designerId: design.designerId ?? null,
+    });
+    set((state) => ({ designs: [...state.designs, created] }));
+    return created;
+  },
+
+  saveDesign: async (id, updates) => {
+    const updated = await updateDesignRequest(id, {
+      name: updates.name,
+      room: updates.room,
+      furniture: updates.furniture,
+      thumbnail: updates.thumbnail ?? null,
+    });
+    set((state) => ({
+      designs: state.designs.map((d) => (d.id === id ? updated : d)),
+    }));
+    return updated;
+  },
+
+  removeDesign: async (id) => {
+    await deleteDesignRequest(id);
+    set((state) => ({
+      designs: state.designs.filter((d) => d.id !== id),
+    }));
+  },
+
+  duplicateDesign: async (id) => {
+    const original = get().designs.find((d) => d.id === id);
+    if (!original) return null;
+    const duplicated = await duplicateDesignRequest(id);
+    set((state) => ({ designs: [...state.designs, duplicated] }));
+    return duplicated;
+  },
 
   filteredDesigns: () => {
     const { designs, filters } = get();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Armchair,
@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { mockFurniture } from '@/lib/mock-data';
+import { useFurnitureStore } from '@/lib/stores/useFurnitureStore';
 import type { FurnitureItem, FurnitureCategory } from '@/types/furniture.types';
 
 const categoryIcons: Record<FurnitureCategory, LucideIcon> = {
@@ -43,8 +43,15 @@ interface FurniturePaletteProps {
 export function FurniturePalette({ onAddFurniture }: FurniturePaletteProps) {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<FurnitureCategory | 'all'>('all');
-  const items = useMemo(() => {
-    let filtered: FurnitureItem[] = mockFurniture;
+  const { items, loadFurniture } = useFurnitureStore();
+
+  useEffect(() => {
+    if (items.length === 0) {
+      loadFurniture();
+    }
+  }, [items.length, loadFurniture]);
+  const filteredItems = useMemo(() => {
+    let filtered: FurnitureItem[] = items;
     if (activeCategory !== 'all') {
       filtered = filtered.filter((i) => i.category === activeCategory);
     }
@@ -55,7 +62,7 @@ export function FurniturePalette({ onAddFurniture }: FurniturePaletteProps) {
       );
     }
     return filtered;
-  }, [search, activeCategory]);
+  }, [items, search, activeCategory]);
 
   return (
     <div className="flex h-full w-64 flex-col border-r bg-background">
@@ -112,12 +119,12 @@ export function FurniturePalette({ onAddFurniture }: FurniturePaletteProps) {
       {/* Items list */}
       <ScrollArea className="flex-1">
         <div className="space-y-1 p-2">
-          {items.length === 0 ? (
+          {filteredItems.length === 0 ? (
             <p className="py-8 text-center text-xs text-muted-foreground">
               No furniture found
             </p>
           ) : (
-            items.map((item, i) => (
+            filteredItems.map((item, i) => (
               <FurniturePaletteItem
                 key={item.id}
                 item={item}

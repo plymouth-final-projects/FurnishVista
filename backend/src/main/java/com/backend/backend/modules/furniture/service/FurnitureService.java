@@ -20,17 +20,15 @@ public class FurnitureService {
     }
 
     public FurnitureResponse getById(String id) {
-        return furnitureRepository.findAll().stream()
-                .filter(item -> item.id().equals(id))
-                .findFirst()
-                .map(this::toResponse)
-                .orElseThrow(() -> new ResourceNotFoundException("Furniture not found"));
+        return furnitureRepository.findById(id)
+            .map(this::toResponse)
+            .orElseThrow(() -> new ResourceNotFoundException("Furniture not found"));
     }
 
     public List<FurnitureResponse> byCategory(String category) {
         String normalized = category.toLowerCase();
         return furnitureRepository.findAll().stream()
-                .filter(item -> item.category().equalsIgnoreCase(normalized))
+            .filter(item -> item.getCategory().equalsIgnoreCase(normalized))
                 .map(this::toResponse)
                 .toList();
     }
@@ -38,25 +36,25 @@ public class FurnitureService {
     public List<FurnitureResponse> search(String query) {
         String normalized = query == null ? "" : query.toLowerCase();
         return furnitureRepository.findAll().stream()
-                .filter(item -> item.name().toLowerCase().contains(normalized)
-                        || item.category().toLowerCase().contains(normalized)
-                        || (item.description() != null && item.description().toLowerCase().contains(normalized)))
+            .filter(item -> item.getName().toLowerCase().contains(normalized)
+                || item.getCategory().toLowerCase().contains(normalized)
+                || (item.getDescription() != null && item.getDescription().toLowerCase().contains(normalized)))
                 .map(this::toResponse)
                 .toList();
     }
 
     private FurnitureResponse toResponse(FurnitureItem item) {
         return new FurnitureResponse(
-                item.id(),
-                item.name(),
-                item.category(),
-                item.modelPath(),
-                item.thumbnail(),
-                item.defaultWidth(),
-                item.defaultLength(),
-                item.defaultHeight(),
-                item.color(),
-                item.description()
+                item.getId(),
+                item.getName(),
+                item.getCategory(),
+                item.getModelPath(),
+                item.getThumbnail(),
+                item.getDefaultWidth(),
+                item.getDefaultLength(),
+                item.getDefaultHeight(),
+                item.getColor(),
+                item.getDescription()
         );
     }
 }

@@ -1,19 +1,39 @@
 package com.backend.backend.modules.design.entity;
 
-import com.backend.backend.modules.room.dto.RoomResponse;
-import lombok.Builder;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.util.List;
+import java.time.LocalDateTime;
 
-@Builder
-public record Design(
-        String id,
-        String name,
-        RoomResponse room,
-        List<PlacedFurniture> furniture,
-        String createdAt,
-        String updatedAt,
-        String thumbnail,
-        String designerId
-) {
+@Getter
+@Setter
+@NoArgsConstructor
+@Entity
+@Table(name = "designs")
+public class Design {
+
+        @Id
+        private String id;
+
+        @Column(nullable = false)
+        private String name;
+
+        @Column(name = "room_id")
+        private String roomId;
+
+        @Column(name = "created_at")
+        private LocalDateTime createdAt;
+
+        @Column(name = "updated_at")
+        private LocalDateTime updatedAt;
+
+        private String thumbnail;
+
+        @Column(name = "designer_id")
+        private String designerId;
 }

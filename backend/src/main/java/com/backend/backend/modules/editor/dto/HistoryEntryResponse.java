@@ -1,11 +1,11 @@
 package com.backend.backend.modules.editor.dto;
 
-import com.backend.backend.modules.design.entity.PlacedFurniture;
+import com.backend.backend.modules.design.dto.PlacedFurnitureDto;
 
 import java.util.List;
 
 public record HistoryEntryResponse(
-        List<PlacedFurniture> furniture,
+        List<PlacedFurnitureDto> furniture,
         long timestamp
 ) {
 }

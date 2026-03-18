@@ -10,7 +10,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ColorPicker } from './color-picker';
-import { useEditorStore } from '@/states/useEditorStore';
+import { useEditorStore } from '@/lib/stores/useEditorStore';
 
 export function ShadingControl() {
   const { furniture, setFurniture, pushHistory } = useEditorStore();

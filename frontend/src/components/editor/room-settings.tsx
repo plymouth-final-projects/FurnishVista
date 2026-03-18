@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ColorPicker } from './color-picker';
-import { useEditorStore } from '@/states/useEditorStore';
+import { useEditorStore } from '@/lib/stores/useEditorStore';
 import type { FloorType } from '@/types/room.types';
 
 const floorTypes: { value: FloorType; label: string }[] = [

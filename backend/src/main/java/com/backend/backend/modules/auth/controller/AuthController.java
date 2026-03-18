@@ -7,8 +7,10 @@ import com.backend.backend.modules.auth.dto.PasswordResetRequest;
 import com.backend.backend.modules.auth.dto.SignupRequest;
 import com.backend.backend.modules.auth.service.AuthService;
 import com.backend.backend.modules.auth.service.PasswordResetService;
+import com.backend.backend.common.exception.UnauthorizedOperationException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,13 +28,17 @@ public class AuthController {
     private final PasswordResetService passwordResetService;
 
     @PostMapping("/login")
-    public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ApiResponse.ok("Login successful", authService.login(request));
+    public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpSession session) {
+        AuthResponse response = authService.login(request);
+        session.setAttribute("userId", response.id());
+        return ApiResponse.ok("Login successful", response);
     }
 
     @PostMapping("/signup")
-    public ApiResponse<AuthResponse> signup(@Valid @RequestBody SignupRequest request) {
-        return ApiResponse.ok("Signup successful", authService.signup(request));
+    public ApiResponse<AuthResponse> signup(@Valid @RequestBody SignupRequest request, HttpSession session) {
+        AuthResponse response = authService.signup(request);
+        session.setAttribute("userId", response.id());
+        return ApiResponse.ok("Signup successful", response);
     }
 
     @PostMapping("/forgot-password")
@@ -41,7 +47,17 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ApiResponse<AuthResponse> me() {
-        return ApiResponse.ok("Current user", authService.me());
+    public ApiResponse<AuthResponse> me(HttpSession session) {
+        Object userId = session.getAttribute("userId");
+        if (userId == null) {
+            throw new UnauthorizedOperationException("Authentication required");
+        }
+        return ApiResponse.ok("Current user", authService.me(userId.toString()));
+    }
+
+    @PostMapping("/logout")
+    public ApiResponse<Map<String, String>> logout(HttpSession session) {
+        session.invalidate();
+        return ApiResponse.ok("Logged out", Map.of("message", "Logged out"));
     }
 }

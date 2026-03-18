@@ -7,9 +7,9 @@ import * as THREE from 'three';
 import { toast } from 'sonner';
 import { RoomScene } from './room-scene';
 import { FurnitureModel3D } from './furniture-model3D';
-import { useEditorStore } from '@/states/useEditorStore';
-import { mockFurniture } from '@/lib/mock-data';
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import { useEditorStore } from '@/lib/stores/useEditorStore';
+import { useFurnitureStore } from '@/lib/stores/useFurnitureStore';
+import { LoadingSpinner } from '@/shared/LoadingSpinner';
 import { GRID_SIZE } from '@/lib/constants';
 
 // Module-level camera ref so the drop handler (outside the Canvas) can raycast
@@ -31,6 +31,7 @@ function SceneContent() {
   const furniture = useEditorStore((s) => s.furniture);
   const selectedItemId = useEditorStore((s) => s.selectedItemId);
   const selectItem = useEditorStore((s) => s.selectItem);
+  const getById = useFurnitureStore((s) => s.getById);
 
   // Drag state refs (not React state to avoid re-renders during drag)
   const orbitRef = useRef<any>(null);
@@ -97,7 +98,7 @@ function SceneContent() {
         }
 
         // Get furniture data to check bounds properly
-        const furnitureData = mockFurniture.find((f) => f.id === item.furnitureId);
+        const furnitureData = getById(item.furnitureId);
         if (!furnitureData) return;
         
         // Clamp within room bounds accounting for furniture dimensions
@@ -209,7 +210,7 @@ function SceneContent() {
 
       {/* Furniture */}
       {furniture.map((placed) => {
-        const furnitureData = mockFurniture.find((f) => f.id === placed.furnitureId);
+        const furnitureData = getById(placed.furnitureId);
         if (!furnitureData) return null;
 
         return (
@@ -233,6 +234,7 @@ export function Viewport3D() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const view = useEditorStore((s) => s.view);
   const isVisible = view === '3d';
+  const getById = useFurnitureStore((s) => s.getById);
 
   // Handle WebGL context loss/restore
   useEffect(() => {
@@ -264,7 +266,7 @@ export function Viewport3D() {
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     const furnitureId = e.dataTransfer.getData('furnitureId');
-    const item = mockFurniture.find((f) => f.id === furnitureId);
+    const item = getById(furnitureId);
     if (!item || !sceneCamera.current) return;
 
     // Raycast from drop screen position to the floor plane (y = 0)

@@ -20,19 +20,19 @@ public class RoomTemplateService {
 
     private RoomTemplateResponse toResponse(RoomTemplate template) {
         return new RoomTemplateResponse(
-                template.id(),
-                template.name(),
-                template.description(),
-                template.thumbnail(),
+            template.getId(),
+            template.getName(),
+            template.getDescription(),
+            template.getThumbnail(),
                 new RoomTemplateResponse.RoomTemplateRoomResponse(
-                        template.width(),
-                        template.length(),
-                        template.height(),
-                        template.shape(),
-                        template.wallColor(),
-                        template.floorType(),
-                        template.floorColor(),
-                        template.ceilingColor()
+                template.getWidth(),
+                template.getLength(),
+                template.getHeight(),
+                template.getShape(),
+                template.getWallColor(),
+                template.getFloorType(),
+                template.getFloorColor(),
+                template.getCeilingColor()
                 )
         );
     }
