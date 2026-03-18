@@ -17,8 +17,8 @@ import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import { ViewToggle } from './view-toggle';
-import { useEditorStore } from '@/states/useEditorStore';
-import { useUIStore } from '@/states/useUIStore';
+import { useEditorStore } from '@/lib/stores/useEditorStore';
+import { useUIStore } from '@/lib/stores/useUIStore';
 
 interface EditorToolbarProps {
   onSave: () => void;

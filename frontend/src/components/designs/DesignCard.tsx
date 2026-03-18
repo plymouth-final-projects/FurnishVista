@@ -22,8 +22,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { useDesignStore } from '@/states/useDesignStore';
-import { useUIStore } from '@/states/useUIStore';
+import { useDesignStore } from '@/lib/stores/useDesignStore';
+import { useUIStore } from '@/lib/stores/useUIStore';
 import type { Design } from '@/types/design.types';
 
 interface DesignCardProps {
@@ -31,30 +31,70 @@ interface DesignCardProps {
   index?: number;
 }
 
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+const SRI_LANKA_TZ = 'Asia/Colombo';
 
-  if (days === 0) return 'Today';
-  if (days === 1) return 'Yesterday';
-  if (days < 7) return `${days} days ago`;
-  if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+function parseServerDate(dateStr: string): Date {
+  const direct = new Date(dateStr);
+  if (!Number.isNaN(direct.getTime())) {
+    return direct;
+  }
+
+  const normalized = dateStr.includes(' ')
+    ? `${dateStr.replace(' ', 'T')}+05:30`
+    : `${dateStr}+05:30`;
+  return new Date(normalized);
+}
+
+function tzDayStamp(date: Date): number {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: SRI_LANKA_TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const year = Number(parts.find((p) => p.type === 'year')?.value ?? 0);
+  const month = Number(parts.find((p) => p.type === 'month')?.value ?? 1) - 1;
+  const day = Number(parts.find((p) => p.type === 'day')?.value ?? 1);
+  return Date.UTC(year, month, day);
+}
+
+function formatUpdatedAt(dateStr: string): string {
+  const date = parseServerDate(dateStr);
+  if (Number.isNaN(date.getTime())) {
+    return dateStr;
+  }
+
+  const now = new Date();
+  const diffDays = Math.floor((tzDayStamp(now) - tzDayStamp(date)) / (1000 * 60 * 60 * 24));
+  const time = new Intl.DateTimeFormat('en-US', {
+    timeZone: SRI_LANKA_TZ,
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date);
+
+  if (diffDays === 0) return `Today, ${time}`;
+  if (diffDays === 1) return `Yesterday, ${time}`;
+
+  const monthDay = new Intl.DateTimeFormat('en-US', {
+    timeZone: SRI_LANKA_TZ,
+    month: 'short',
+    day: 'numeric',
+  }).format(date);
+
+  return `${monthDay}, ${time}`;
 }
 
 export function DesignCard({ design, index = 0 }: DesignCardProps) {
   const router = useRouter();
-  const { duplicateDesign, deleteDesign } = useDesignStore();
+  const { duplicateDesign, removeDesign } = useDesignStore();
   const { openConfirmDialog } = useUIStore();
 
   function handleEdit() {
     router.push(`/editor/${design.id}`);
   }
 
-  function handleDuplicate() {
-    const newDesign = duplicateDesign(design.id);
+  async function handleDuplicate() {
+    const newDesign = await duplicateDesign(design.id);
     if (newDesign) {
       toast.success('Design duplicated', {
         description: `"${newDesign.name}" has been created`,
@@ -66,8 +106,8 @@ export function DesignCard({ design, index = 0 }: DesignCardProps) {
     openConfirmDialog(
       'Delete design',
       `Are you sure you want to delete "${design.name}"? This action cannot be undone.`,
-      () => {
-        deleteDesign(design.id);
+      async () => {
+        await removeDesign(design.id);
         toast.success('Design deleted', {
           description: `"${design.name}" has been removed`,
         });
@@ -169,7 +209,7 @@ export function DesignCard({ design, index = 0 }: DesignCardProps) {
             </span>
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" aria-hidden="true" />
-              {formatDate(design.updatedAt)}
+              {formatUpdatedAt(design.updatedAt)}
             </span>
           </div>
         </CardContent>

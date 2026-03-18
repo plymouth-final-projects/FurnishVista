@@ -1,20 +1,47 @@
 package com.backend.backend.modules.room.entity;
 
-import lombok.Builder;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Builder
-public record RoomTemplate(
-        String id,
-        String name,
-        String description,
-        String thumbnail,
-        double width,
-        double length,
-        double height,
-        String shape,
-        String wallColor,
-        String floorType,
-        String floorColor,
-        String ceilingColor
-) {
+@Getter
+@Setter
+@NoArgsConstructor
+@Entity
+@Table(name = "room_templates")
+public class RoomTemplate {
+
+        @Id
+        private String id;
+
+        @Column(nullable = false)
+        private String name;
+
+        private String description;
+
+        private String thumbnail;
+
+        private double width;
+
+        private double length;
+
+        private double height;
+
+        private String shape;
+
+        @Column(name = "wall_color")
+        private String wallColor;
+
+        @Column(name = "floor_type")
+        private String floorType;
+
+        @Column(name = "floor_color")
+        private String floorColor;
+
+        @Column(name = "ceiling_color")
+        private String ceilingColor;
 }

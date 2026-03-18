@@ -3,7 +3,7 @@
 import { Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DesignCard } from './DesignCard';
-import { EmptyState } from '@/components/shared/EmptyState';
+import { EmptyState } from '@/shared/EmptyState';
 import type { Design } from '@/types/design.types';
 import Link from 'next/link';
 

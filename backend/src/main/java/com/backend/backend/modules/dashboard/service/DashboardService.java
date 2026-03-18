@@ -4,6 +4,7 @@ import com.backend.backend.modules.dashboard.dto.DashboardSummaryResponse;
 import com.backend.backend.modules.dashboard.dto.RecentDesignResponse;
 import com.backend.backend.modules.design.service.DesignQueryService;
 import com.backend.backend.modules.furniture.service.FurnitureService;
+import com.backend.backend.modules.room.repository.RoomRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,12 +17,13 @@ public class DashboardService {
 
     private final DesignQueryService designQueryService;
     private final FurnitureService furnitureService;
+    private final RoomRepository roomRepository;
 
     public DashboardSummaryResponse summary() {
         int designCount = designQueryService.all().size();
         return new DashboardSummaryResponse(
                 designCount,
-                designCount,
+            (int) roomRepository.count(),
                 furnitureService.getAll().size(),
                 Instant.now().toString()
         );

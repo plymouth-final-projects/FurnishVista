@@ -1,26 +1,35 @@
 package com.backend.backend.modules.auth.service;
 
+import com.backend.backend.common.exception.UnauthorizedOperationException;
 import com.backend.backend.common.exception.ValidationException;
 import com.backend.backend.modules.auth.dto.AuthResponse;
 import com.backend.backend.modules.auth.dto.LoginRequest;
 import com.backend.backend.modules.auth.dto.SignupRequest;
+import com.backend.backend.modules.user.entity.User;
+import com.backend.backend.modules.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
     private static final String DEFAULT_ROLE = "designer";
-    private final Map<String, AuthUserRecord> usersByEmail = new ConcurrentHashMap<>();
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthResponse login(LoginRequest request) {
-        AuthUserRecord user = usersByEmail.computeIfAbsent(request.email(), email ->
-                new AuthUserRecord(UUID.randomUUID().toString(), "Designer", email, DEFAULT_ROLE, Instant.now().toString(), request.password())
-        );
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new ValidationException("Invalid email or password"));
+
+        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            throw new ValidationException("Invalid email or password");
+        }
+
         return toResponse(user);
     }
 
@@ -29,56 +38,42 @@ public class AuthService {
             throw new ValidationException("Passwords do not match");
         }
 
-        if (usersByEmail.containsKey(request.email())) {
+        if (userRepository.findByEmail(request.email()).isPresent()) {
             throw new ValidationException("Email already registered");
         }
 
-        AuthUserRecord user = new AuthUserRecord(
-                UUID.randomUUID().toString(),
-                request.name(),
-                request.email(),
-                DEFAULT_ROLE,
-                Instant.now().toString(),
-                request.password()
-        );
-        usersByEmail.put(user.email(), user);
+        User user = new User();
+        user.setName(request.name());
+        user.setEmail(request.email());
+        user.setRole(DEFAULT_ROLE);
+        user.setPasswordHash(passwordEncoder.encode(request.password()));
+        User saved = userRepository.save(user);
+        return toResponse(saved);
+    }
+
+    public AuthResponse me(String userId) {
+        if (userId == null || userId.isBlank()) {
+            throw new UnauthorizedOperationException("Authentication required");
+        }
+        long id;
+        try {
+            id = Long.parseLong(userId);
+        } catch (NumberFormatException ex) {
+            throw new UnauthorizedOperationException("Authentication required");
+        }
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UnauthorizedOperationException("Authentication required"));
         return toResponse(user);
     }
 
-    public AuthResponse me() {
-        AuthUserRecord user = usersByEmail.values().stream().findFirst().orElseGet(() -> {
-            AuthUserRecord seeded = new AuthUserRecord(
-                    "user-1",
-                    "Sarah Mitchell",
-                    "sarah@furnishvista.com",
-                    DEFAULT_ROLE,
-                    "2025-09-15T10:00:00Z",
-                    "secret"
-            );
-            usersByEmail.put(seeded.email(), seeded);
-            return seeded;
-        });
-        return toResponse(user);
-    }
-
-    private AuthResponse toResponse(AuthUserRecord user) {
+    private AuthResponse toResponse(User user) {
         return new AuthResponse(
-                "mock-jwt-token-" + System.currentTimeMillis(),
-                user.id(),
-                user.name(),
-                user.email(),
-                user.role(),
-                user.createdAt()
+                "session-" + UUID.randomUUID(),
+                user.getId().toString(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getCreatedAt() == null ? Instant.now().toString() : user.getCreatedAt().toString()
         );
-    }
-
-    private record AuthUserRecord(
-            String id,
-            String name,
-            String email,
-            String role,
-            String createdAt,
-            String password
-    ) {
     }
 }

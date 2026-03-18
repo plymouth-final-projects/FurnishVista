@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import * as THREE from 'three';
-import { useEditorStore } from '@/states/useEditorStore';
+import { useEditorStore } from '@/lib/stores/useEditorStore';
 
 const WALL_THICKNESS = 0.08;
 

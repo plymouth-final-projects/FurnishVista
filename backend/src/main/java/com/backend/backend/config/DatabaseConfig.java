@@ -1,6 +1,7 @@
 package com.backend.backend.config;
 
 import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,11 +13,15 @@ import java.util.Map;
 public class DatabaseConfig {
 
 	@Bean
-	public DataSource dataSource() {
+	public DataSource dataSource(
+			@Value("${app.db.url}") String jdbcUrl,
+			@Value("${app.db.username}") String username,
+			@Value("${app.db.password}") String password
+	) {
 		HikariDataSource dataSource = new HikariDataSource();
-		dataSource.setJdbcUrl(getEnv("DB_URL", "jdbc:postgresql://localhost:5432/architectlk"));
-		dataSource.setUsername(getEnv("DB_USERNAME", "postgres"));
-		dataSource.setPassword(getEnv("DB_PASSWORD", "nethmal123"));
+		dataSource.setJdbcUrl(jdbcUrl);
+		dataSource.setUsername(username);
+		dataSource.setPassword(password);
 		dataSource.setDriverClassName("org.postgresql.Driver");
 		return dataSource;
 	}
@@ -31,8 +36,4 @@ public class DatabaseConfig {
 		};
 	}
 
-	private String getEnv(String key, String defaultValue) {
-		String value = System.getenv(key);
-		return (value == null || value.isBlank()) ? defaultValue : value;
-	}
 }

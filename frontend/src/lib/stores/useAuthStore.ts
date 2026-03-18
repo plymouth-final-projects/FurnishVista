@@ -1,9 +1,10 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { logoutUser } from '@/services/auth.service';
 import type { User } from '@/types/auth.types';
 
 interface AuthState {
   user: User | null;
-  isAuthenticated: boolean;
   isLoading: boolean;
   login: (user: User) => void;
   logout: () => void;
@@ -11,19 +12,31 @@ interface AuthState {
   updateUser: (updates: Partial<User>) => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  isAuthenticated: false,
-  isLoading: false,
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      isLoading: false,
 
-  login: (user) => set({ user, isAuthenticated: true, isLoading: false }),
+      login: (user) => set({ user, isLoading: false }),
 
-  logout: () => set({ user: null, isAuthenticated: false }),
+      logout: () => {
+        void logoutUser().catch(() => undefined);
+        set({ user: null, isLoading: false });
+      },
 
-  setLoading: (isLoading) => set({ isLoading }),
+      setLoading: (isLoading) => set({ isLoading }),
 
-  updateUser: (updates) =>
-    set((state) => ({
-      user: state.user ? { ...state.user, ...updates } : null,
-    })),
-}));
+      updateUser: (updates) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, ...updates } : null,
+        })),
+    }),
+    {
+      name: 'auth-store',
+      partialize: (state) => ({
+        user: state.user,
+      }),
+    },
+  ),
+);

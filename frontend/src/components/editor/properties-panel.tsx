@@ -18,8 +18,8 @@ import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ColorPicker } from './color-picker';
-import { useEditorStore } from '@/states/useEditorStore';
-import { mockFurniture } from '@/lib/mock-data';
+import { useEditorStore } from '@/lib/stores/useEditorStore';
+import { useFurnitureStore } from '@/lib/stores/useFurnitureStore';
 import { ROTATION_STEP } from '@/lib/constants';
 
 export function PropertiesPanel() {
@@ -31,10 +31,11 @@ export function PropertiesPanel() {
     addFurniture,
     selectItem,
   } = useEditorStore();
+  const { getById } = useFurnitureStore();
 
   const selectedPlaced = furniture.find((f) => f.id === selectedItemId);
   const selectedFurniture = selectedPlaced
-    ? mockFurniture.find((f) => f.id === selectedPlaced.furnitureId)
+    ? getById(selectedPlaced.furnitureId)
     : null;
 
   function handleRotate() {

@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useDesignStore } from '@/states/useDesignStore';
+import { useDesignStore } from '@/lib/stores/useDesignStore';
 import type { DesignSortBy } from '@/types/design.types';
 
 export function DesignActions() {

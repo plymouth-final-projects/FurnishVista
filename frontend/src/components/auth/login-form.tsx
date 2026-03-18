@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, LogIn, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -135,25 +135,25 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                 >
-                  <LogIn className="h-4 w-4" />
+                  <span className="inline-block h-4 w-4 rounded-full border-2 border-current border-t-transparent" />
                 </motion.div>
               ) : (
-                <LogIn className="h-4 w-4" />
+                <span className="inline-block h-4 w-4 rounded-full border-2 border-current border-t-transparent opacity-0" />
               )}
               {isLoading ? 'Signing in...' : 'Sign in'}
             </Button>
           </form>
 
-          <div className="relative my-6">
+         {/*  <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
             </div>
-          </div>
+          </div> */}
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* <div className="grid grid-cols-2 gap-3">
             <Button variant="outline" type="button" disabled>
               <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -169,7 +169,7 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
               </svg>
               Apple
             </Button>
-          </div>
+          </div> */}
         </CardContent>
         <CardFooter className="justify-center">
           <p className="text-sm text-muted-foreground">

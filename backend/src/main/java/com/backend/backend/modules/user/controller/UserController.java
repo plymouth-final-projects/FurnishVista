@@ -6,6 +6,7 @@ import com.backend.backend.modules.user.dto.UserResponse;
 import com.backend.backend.modules.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,12 +21,14 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/me")
-    public ApiResponse<UserResponse> me() {
-        return ApiResponse.ok("User profile", userService.me());
+    public ApiResponse<UserResponse> me(HttpSession session) {
+        Object userId = session.getAttribute("userId");
+        return ApiResponse.ok("User profile", userService.me(userId == null ? null : userId.toString()));
     }
 
     @PutMapping("/me")
-    public ApiResponse<UserResponse> update(@Valid @RequestBody UpdateUserRequest request) {
-        return ApiResponse.ok("Profile updated", userService.update(request));
+    public ApiResponse<UserResponse> update(@Valid @RequestBody UpdateUserRequest request, HttpSession session) {
+        Object userId = session.getAttribute("userId");
+        return ApiResponse.ok("Profile updated", userService.update(request, userId == null ? null : userId.toString()));
     }
 }

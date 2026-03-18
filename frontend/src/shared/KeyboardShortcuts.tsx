@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useUIStore } from '@/states/useUIStore';
+import { useUIStore } from '@/lib/stores/useUIStore';
 import { KEYBOARD_SHORTCUTS } from '@/lib/constants';
 import { Keyboard } from 'lucide-react';
 
