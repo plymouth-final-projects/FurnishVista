@@ -1,4 +1,4 @@
-# FurnishVista (frontend) + ArchitectLK (backend)
+# FurnishVista
 
 This repository contains a **Next.js furniture layout editor** (2D + 3D) and a **Spring Boot REST API** intended to power it. It was built as coursework for **PUSL3122: HCI, Computer Graphics & Visualisation**.
 
