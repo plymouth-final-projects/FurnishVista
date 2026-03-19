@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { PlacedFurniture, EditorView, HistoryEntry } from '@/types/editor.types';
 import type { Room } from '@/types/room.types';
 import { ROOM_DEFAULTS } from '@/lib/constants';
+import { useFurnitureStore } from './useFurnitureStore';
 
 const MAX_HISTORY = 50;
 
@@ -10,6 +11,7 @@ interface EditorState {
   room: Room;
   setRoom: (room: Room) => void;
   updateRoom: (updates: Partial<Room>) => void;
+  updateRoomWithAutoFit: (updates: Partial<Pick<Room, 'width' | 'length' | 'height'>>) => void;
 
   /* Furniture */
   furniture: PlacedFurniture[];
@@ -70,6 +72,73 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     set((state) => {
       get().pushHistory();
       return { room: { ...state.room, ...updates }, isDirty: true };
+    }),
+  updateRoomWithAutoFit: (updates) =>
+    set((state) => {
+      const nextWidth = updates.width ?? state.room.width;
+      const nextLength = updates.length ?? state.room.length;
+      const nextHeight = updates.height ?? state.room.height;
+
+      const widthChanged = nextWidth !== state.room.width;
+      const lengthChanged = nextLength !== state.room.length;
+
+      get().pushHistory();
+
+      if (!widthChanged && !lengthChanged) {
+        return {
+          room: {
+            ...state.room,
+            width: nextWidth,
+            length: nextLength,
+            height: nextHeight,
+          },
+          isDirty: true,
+        };
+      }
+
+      const ratioX = state.room.width > 0 ? nextWidth / state.room.width : 1;
+      const ratioZ = state.room.length > 0 ? nextLength / state.room.length : 1;
+      const fitRatio = Math.min(ratioX, ratioZ);
+      const { getById } = useFurnitureStore.getState();
+
+      const updatedFurniture = state.furniture.map((item) => {
+        const furniture = getById(item.furnitureId);
+        if (!furniture) return item;
+
+        const adjustedScale = Math.max(0.25, Math.min(3, item.scale * fitRatio));
+        const adjustedWidth = furniture.defaultWidth * adjustedScale;
+        const adjustedLength = furniture.defaultLength * adjustedScale;
+
+        const nextX = Math.max(
+          0,
+          Math.min(item.position.x * ratioX, Math.max(0, nextWidth - adjustedWidth))
+        );
+        const nextZ = Math.max(
+          0,
+          Math.min(item.position.z * ratioZ, Math.max(0, nextLength - adjustedLength))
+        );
+
+        return {
+          ...item,
+          scale: adjustedScale,
+          position: {
+            ...item.position,
+            x: nextX,
+            z: nextZ,
+          },
+        };
+      });
+
+      return {
+        room: {
+          ...state.room,
+          width: nextWidth,
+          length: nextLength,
+          height: nextHeight,
+        },
+        furniture: updatedFurniture,
+        isDirty: true,
+      };
     }),
 
   furniture: [],

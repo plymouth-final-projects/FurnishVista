@@ -1,6 +1,9 @@
 package com.backend.backend.modules.design.service;
 
+import com.backend.backend.common.constants.ErrorMessages;
+import com.backend.backend.common.exception.FurnitureOverlapException;
 import com.backend.backend.common.exception.ResourceNotFoundException;
+import com.backend.backend.common.exception.ValidationException;
 import com.backend.backend.modules.design.dto.CreateDesignRequest;
 import com.backend.backend.modules.design.dto.DesignResponse;
 import com.backend.backend.modules.design.dto.PlacedFurnitureDto;
@@ -9,6 +12,10 @@ import com.backend.backend.modules.design.entity.Design;
 import com.backend.backend.modules.design.entity.PlacedFurniture;
 import com.backend.backend.modules.design.repository.DesignRepository;
 import com.backend.backend.modules.design.repository.PlacedFurnitureRepository;
+import com.backend.backend.modules.furniture.engine.BoundaryValidator;
+import com.backend.backend.modules.furniture.engine.CollisionEngine;
+import com.backend.backend.modules.furniture.entity.FurnitureItem;
+import com.backend.backend.modules.furniture.repository.FurnitureRepository;
 import com.backend.backend.modules.room.dto.RoomRequest;
 import com.backend.backend.modules.room.dto.RoomResponse;
 import com.backend.backend.modules.room.entity.Room;
@@ -20,8 +27,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -42,6 +53,9 @@ public class DesignService {
     private final DesignRepository designRepository;
     private final RoomRepository roomRepository;
     private final PlacedFurnitureRepository placedFurnitureRepository;
+    private final FurnitureRepository furnitureRepository;
+    private final CollisionEngine collisionEngine;
+    private final BoundaryValidator boundaryValidator;
 
     public DesignResponse create(CreateDesignRequest request) {
         LocalDateTime now = LocalDateTime.now(SRI_LANKA_ZONE);
@@ -58,7 +72,7 @@ public class DesignService {
         designRepository.save(design);
 
         List<PlacedFurnitureDto> furniture = request.furniture() == null ? List.of() : request.furniture();
-        savePlacedFurniture(design.getId(), furniture);
+        savePlacedFurniture(design.getId(), furniture, room);
         return toResponse(design);
     }
 
@@ -67,9 +81,12 @@ public class DesignService {
         Design current = designRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Design not found"));
 
+        Room activeRoom = findRoom(current.getRoomId()).orElseGet(this::defaultRoom);
+
         if (request.room() != null) {
             Room room = updateRoom(current.getRoomId(), request.room());
             current.setRoomId(room.getId().toString());
+            activeRoom = room;
         }
 
         if (request.name() != null && !request.name().isBlank()) {
@@ -85,7 +102,7 @@ public class DesignService {
 
         if (request.furniture() != null) {
             placedFurnitureRepository.deleteByDesignId(current.getId());
-            savePlacedFurniture(current.getId(), request.furniture());
+            savePlacedFurniture(current.getId(), request.furniture(), activeRoom);
         }
 
         return toResponse(current);
@@ -119,7 +136,7 @@ public class DesignService {
         designRepository.save(duplicate);
 
         List<PlacedFurniture> furniture = placedFurnitureRepository.findByDesignId(original.getId());
-        savePlacedFurniture(duplicate.getId(), toDtoList(furniture));
+        savePlacedFurniture(duplicate.getId(), toDtoList(furniture), duplicatedRoom);
 
         return toResponse(duplicate);
     }
@@ -237,7 +254,9 @@ public class DesignService {
         );
     }
 
-    private void savePlacedFurniture(String designId, List<PlacedFurnitureDto> furniture) {
+    private void savePlacedFurniture(String designId, List<PlacedFurnitureDto> furniture, Room room) {
+        validateFurnitureLayout(furniture, room);
+
         List<PlacedFurniture> entities = new ArrayList<>();
         for (PlacedFurnitureDto placed : furniture) {
             if (placed == null || placed.furnitureId() == null || placed.furnitureId().isBlank()) {
@@ -260,6 +279,80 @@ public class DesignService {
             entities.add(entity);
         }
         placedFurnitureRepository.saveAll(entities);
+    }
+
+    private void validateFurnitureLayout(List<PlacedFurnitureDto> furniture, Room room) {
+        if (furniture == null || furniture.isEmpty()) {
+            return;
+        }
+
+        Set<String> furnitureIds = new HashSet<>();
+        for (PlacedFurnitureDto placed : furniture) {
+            if (placed != null && placed.furnitureId() != null && !placed.furnitureId().isBlank()) {
+                furnitureIds.add(placed.furnitureId());
+            }
+        }
+
+        Map<String, FurnitureItem> itemsById = new HashMap<>();
+        for (FurnitureItem item : furnitureRepository.findAllById(furnitureIds)) {
+            itemsById.put(item.getId(), item);
+        }
+
+        List<LayoutBox> boxes = new ArrayList<>();
+        for (PlacedFurnitureDto placed : furniture) {
+            if (placed == null || placed.furnitureId() == null || placed.furnitureId().isBlank()) {
+                continue;
+            }
+
+            FurnitureItem furnitureItem = itemsById.get(placed.furnitureId());
+            if (furnitureItem == null) {
+                throw new ResourceNotFoundException("Furniture not found: " + placed.furnitureId());
+            }
+
+            PlacedFurnitureDto.Position position = placed.position() == null
+                ? new PlacedFurnitureDto.Position(0, 0, 0)
+                : placed.position();
+
+            double scale = placed.scale() > 0 ? placed.scale() : 1;
+            double width = furnitureItem.getDefaultWidth() * scale;
+            double length = furnitureItem.getDefaultLength() * scale;
+
+            double maxX = Math.max(0, room.getWidth() - width);
+            double maxZ = Math.max(0, room.getLength() - length);
+            if (!boundaryValidator.withinBounds(position.x(), position.z(), maxX, maxZ)) {
+                throw new ValidationException("Furniture item is outside room bounds");
+            }
+
+            boxes.add(new LayoutBox(
+                placed.id() == null || placed.id().isBlank() ? UUID.randomUUID().toString() : placed.id(),
+                position.x(),
+                position.z(),
+                width,
+                length
+            ));
+        }
+
+        for (int i = 0; i < boxes.size(); i++) {
+            LayoutBox first = boxes.get(i);
+            for (int j = i + 1; j < boxes.size(); j++) {
+                LayoutBox second = boxes.get(j);
+                if (collisionEngine.collides(
+                    first.x,
+                    first.z,
+                    first.width,
+                    first.length,
+                    second.x,
+                    second.z,
+                    second.width,
+                    second.length
+                )) {
+                    throw new FurnitureOverlapException(ErrorMessages.FURNITURE_OVERLAP);
+                }
+            }
+        }
+    }
+
+    private record LayoutBox(String id, double x, double z, double width, double length) {
     }
 
     private List<PlacedFurnitureDto> toDtoList(List<PlacedFurniture> furniture) {

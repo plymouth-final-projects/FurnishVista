@@ -24,7 +24,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ColorPicker } from './color-picker';
 import { useEditorStore } from '@/lib/stores/useEditorStore';
-import type { FloorType } from '@/types/room.types';
+import type { FloorType, RoomShape } from '@/types/room.types';
 
 const floorTypes: { value: FloorType; label: string }[] = [
   { value: 'wood', label: 'Hardwood' },
@@ -33,8 +33,14 @@ const floorTypes: { value: FloorType; label: string }[] = [
   { value: 'marble', label: 'Marble' },
 ];
 
+const roomShapes: { value: RoomShape; label: string }[] = [
+  { value: 'rectangular', label: 'Rectangular' },
+  { value: 'l-shaped', label: 'L-shaped' },
+  { value: 'square', label: 'Square' },
+];
+
 export function RoomSettings() {
-  const { room, updateRoom } = useEditorStore();
+  const { room, updateRoom, updateRoomWithAutoFit } = useEditorStore();
 
   function handleDimensionChange(field: 'width' | 'length' | 'height', value: string) {
     const num = parseFloat(value);
@@ -43,7 +49,15 @@ export function RoomSettings() {
     if (field === 'height' && (num < 2 || num > 5)) return;
     if (field !== 'height' && (num < 1 || num > 20)) return;
 
-    updateRoom({ [field]: num });
+    if (field === 'width' || field === 'length') {
+      updateRoomWithAutoFit({ [field]: num });
+      toast.success('Room updated', {
+        description: `${field} set to ${num}m and furniture auto-fitted`,
+      });
+      return;
+    }
+
+    updateRoomWithAutoFit({ [field]: num });
     toast.success('Room updated', { description: `${field} set to ${num}m` });
   }
 
@@ -128,6 +142,31 @@ export function RoomSettings() {
               <p className="text-[10px] text-muted-foreground">
                 Room area: {(room.width * room.length).toFixed(1)} m²
               </p>
+            </div>
+
+            <Separator />
+
+            {/* Shape */}
+            <div className="space-y-2">
+              <Label className="text-xs">Room Shape</Label>
+              <Select
+                value={room.shape}
+                onValueChange={(value) => {
+                  updateRoom({ shape: value as RoomShape });
+                  toast.success('Shape updated', { description: `Changed to ${value}` });
+                }}
+              >
+                <SelectTrigger aria-label="Room shape">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {roomShapes.map((shape) => (
+                    <SelectItem key={shape.value} value={shape.value}>
+                      {shape.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <Separator />

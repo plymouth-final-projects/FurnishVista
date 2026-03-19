@@ -27,14 +27,51 @@ function GLBModel({
   width,
   length,
   height,
+  color,
+  shading,
 }: {
   path: string;
   width: number;
   length: number;
   height: number;
+  color: string;
+  shading: number;
 }) {
   const { scene } = useGLTF(path);
-  const cloned = useMemo(() => scene.clone(true), [scene]);
+  const shadedColor = useMemo(() => {
+    const tint = new THREE.Color(color);
+    const brightness = 1 - Math.max(0, Math.min(1, shading)) * 0.35;
+    return tint.multiplyScalar(brightness);
+  }, [color, shading]);
+
+  const cloned = useMemo(() => {
+    const root = scene.clone(true);
+    root.traverse((object) => {
+      if (!(object instanceof THREE.Mesh)) return;
+
+      const base = object.material;
+      if (Array.isArray(base)) {
+        object.material = base.map((material) => {
+          const nextMaterial = material.clone();
+          if ('color' in nextMaterial) {
+            nextMaterial.color = shadedColor.clone();
+          }
+          return nextMaterial;
+        });
+      } else if (base) {
+        const nextMaterial = base.clone();
+        if ('color' in nextMaterial) {
+          nextMaterial.color = shadedColor.clone();
+        }
+        object.material = nextMaterial;
+      }
+
+      object.castShadow = true;
+      object.receiveShadow = true;
+    });
+
+    return root;
+  }, [scene, shadedColor]);
 
   const [scale, offset] = useMemo(() => {
     const box = new THREE.Box3().setFromObject(cloned);
@@ -96,7 +133,11 @@ export function FurnitureModel3D({
   const z = placed.position.z + l / 2 - roomLength / 2;
   const y = h / 2;
 
-  const color = new THREE.Color(placed.color);
+  const color = useMemo(() => {
+    const tint = new THREE.Color(placed.color);
+    const brightness = 1 - Math.max(0, Math.min(1, placed.shading)) * 0.35;
+    return tint.multiplyScalar(brightness);
+  }, [placed.color, placed.shading]);
 
   // Animate selection glow
   useFrame(() => {
@@ -136,7 +177,14 @@ export function FurnitureModel3D({
           </mesh>
         }
       >
-        <GLBModel path={furniture.modelPath} width={w} length={l} height={h} />
+        <GLBModel
+          path={furniture.modelPath}
+          width={w}
+          length={l}
+          height={h}
+          color={placed.color}
+          shading={placed.shading}
+        />
       </Suspense>
 
       {/* Selection outline */}

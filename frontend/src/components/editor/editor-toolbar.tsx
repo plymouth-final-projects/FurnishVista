@@ -37,13 +37,27 @@ export function EditorToolbar({ onSave, isSaving }: EditorToolbarProps) {
     isDirty,
   } = useEditorStore();
   const setShortcutsOpen = useUIStore((s) => s.setShortcutsDialogOpen);
+  const openConfirmDialog = useUIStore((s) => s.openConfirmDialog);
+
+  function handleBackToDesigns() {
+    if (!isDirty) {
+      router.push('/designs');
+      return;
+    }
+
+    openConfirmDialog(
+      'Unsaved changes',
+      'You have unsaved changes. Leave editor without saving?',
+      () => router.push('/designs')
+    );
+  }
 
   return (
     <div className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-3">
       {/* Back */}
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" onClick={() => router.push('/designs')} aria-label="Back to designs">
+          <Button variant="ghost" size="icon" onClick={handleBackToDesigns} aria-label="Back to designs">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
