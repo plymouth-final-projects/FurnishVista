@@ -53,6 +53,7 @@ export default function EditorPage() {
     room,
     designName,
     designId: storedDesignId,
+    isDirty,
   } = useEditorStore();
 
   const { designs, loadDesigns, saveDesign, createDesign } = useDesignStore();
@@ -256,6 +257,19 @@ export default function EditorPage() {
   );
 
   useKeyboardShortcuts(shortcuts);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isDirty]);
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">

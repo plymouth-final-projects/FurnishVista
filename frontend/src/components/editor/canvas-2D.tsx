@@ -7,6 +7,7 @@ import { FurnitureItem2D } from './furniture-item2D';
 import { useEditorStore } from '@/lib/stores/useEditorStore';
 import { useFurnitureStore } from '@/lib/stores/useFurnitureStore';
 import { GRID_SIZE } from '@/lib/constants';
+import { getRoomOutline, toKonvaPoints } from '@/lib/room-shape';
 import Konva from 'konva';
 
 export function Canvas2D() {
@@ -24,6 +25,8 @@ export function Canvas2D() {
   const pxPerMeter = 80 * zoom;
   const canvasWidth = room.width * pxPerMeter;
   const canvasHeight = room.length * pxPerMeter;
+  const roomOutline = getRoomOutline(room.shape, canvasWidth, canvasHeight);
+  const roomOutlinePoints = toKonvaPoints(roomOutline);
   const containerWidth = Math.max(800, canvasWidth + 200);
   const containerHeight = Math.max(600, canvasHeight + 200);
 
@@ -183,30 +186,45 @@ export function Canvas2D() {
         >
           <Layer>
             {/* Room floor */}
-            <Rect
+            <Line
               x={100}
               y={100}
-              width={canvasWidth}
-              height={canvasHeight}
+              points={roomOutlinePoints}
+              closed
               fill={room.floorColor}
-              cornerRadius={8}
+              stroke={room.wallColor}
+              strokeWidth={6}
+              lineJoin="round"
             />
 
             {/* Grid */}
-            <Group x={100} y={100}>
+            <Group
+              x={100}
+              y={100}
+              clipFunc={(ctx) => {
+                ctx.beginPath();
+                roomOutline.forEach((point, index) => {
+                  if (index === 0) {
+                    ctx.moveTo(point.x, point.y);
+                  } else {
+                    ctx.lineTo(point.x, point.y);
+                  }
+                });
+                ctx.closePath();
+              }}
+            >
               {renderGrid()}
             </Group>
 
             {/* Room walls */}
-            <Rect
+            <Line
               x={100}
               y={100}
-              width={canvasWidth}
-              height={canvasHeight}
+              points={roomOutlinePoints}
+              closed
               stroke={room.wallColor}
               strokeWidth={6}
-              cornerRadius={8}
-              fill="transparent"
+              lineJoin="round"
             />
 
             {/* Furniture items */}
